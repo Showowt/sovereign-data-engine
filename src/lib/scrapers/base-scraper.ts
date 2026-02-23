@@ -11,6 +11,14 @@ import type {
   ScraperJobResult,
   ScraperStatus,
 } from "./types";
+import {
+  getOrCreateCounty,
+  saveProperties,
+  saveDocuments,
+  saveCourtCases,
+  createScraperRun,
+  completeScraperRun,
+} from "./storage";
 
 export abstract class BaseScraper {
   protected config: CountyScraperConfig;
@@ -103,11 +111,32 @@ export abstract class BaseScraper {
     documentEndDate?: string;
     minPropertyValue?: number;
     maxRecords?: number;
+    saveToSupabase?: boolean;
   }): Promise<ScraperJobResult> {
     this.status = "running";
     this.startedAt = new Date().toISOString();
 
+    // Default to saving to Supabase
+    const shouldSave = options?.saveToSupabase !== false;
+
     try {
+      // Get or create county in Supabase
+      let countyId: string | null = null;
+      let runId: string | null = null;
+
+      if (shouldSave) {
+        countyId = await getOrCreateCounty(this.config);
+        if (countyId) {
+          runId = await createScraperRun(
+            `${this.config.county}_${this.config.state}`.toLowerCase(),
+            countyId,
+          );
+          console.log(
+            `[${this.config.county}] Supabase county ID: ${countyId}`,
+          );
+        }
+      }
+
       const results: {
         properties?: ScrapedProperty[];
         documents?: ScrapedDocument[];
@@ -125,6 +154,15 @@ export abstract class BaseScraper {
         console.log(
           `[${this.config.county}] Scraped ${results.properties.length} properties`,
         );
+
+        // Save to Supabase
+        if (shouldSave && countyId && results.properties.length > 0) {
+          const saveResult = await saveProperties(results.properties, countyId);
+          this.recordsCreated += saveResult.created;
+          if (saveResult.errors.length > 0) {
+            saveResult.errors.forEach((e) => this.logError(e));
+          }
+        }
       }
 
       // Scrape documents (recorder)
@@ -139,6 +177,15 @@ export abstract class BaseScraper {
         console.log(
           `[${this.config.county}] Scraped ${results.documents.length} documents`,
         );
+
+        // Save to Supabase
+        if (shouldSave && countyId && results.documents.length > 0) {
+          const saveResult = await saveDocuments(results.documents, countyId);
+          this.recordsCreated += saveResult.created;
+          if (saveResult.errors.length > 0) {
+            saveResult.errors.forEach((e) => this.logError(e));
+          }
+        }
       }
 
       // Scrape court cases (if available)
@@ -152,13 +199,29 @@ export abstract class BaseScraper {
         console.log(
           `[${this.config.county}] Scraped ${results.courtCases.length} court cases`,
         );
+
+        // Save to Supabase
+        if (shouldSave && countyId && results.courtCases.length > 0) {
+          const saveResult = await saveCourtCases(results.courtCases, countyId);
+          this.recordsCreated += saveResult.created;
+          if (saveResult.errors.length > 0) {
+            saveResult.errors.forEach((e) => this.logError(e));
+          }
+        }
       }
 
       this.status = "completed";
       this.completedAt = new Date().toISOString();
 
-      // TODO: Save results to Supabase
-      // await this.saveResults(results);
+      // Complete scraper run audit record
+      if (runId) {
+        await completeScraperRun(runId, {
+          recordsProcessed: this.recordsProcessed,
+          recordsCreated: this.recordsCreated,
+          recordsUpdated: this.recordsUpdated,
+          errors: this.errors,
+        });
+      }
 
       return this.getResult();
     } catch (error) {
