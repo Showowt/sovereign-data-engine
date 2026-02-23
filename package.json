@@ -1,0 +1,56 @@
+{
+  "name": "sovereign-data-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Blue ocean intelligence platform for real estate and annuity investors",
+  "author": "MachineMind x Hernsted",
+  "scripts": {
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "db:generate": "supabase gen types typescript --local > src/lib/database.types.ts",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:migrate": "supabase migration up",
+    "analyze": "ANALYZE=true next build",
+    "clean": "rm -rf .next node_modules"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.14",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.469.0",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
