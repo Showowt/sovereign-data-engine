@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { C, fonts } from "@/lib/colors";
 import {
@@ -19,6 +19,54 @@ import {
   getAnnuityTargets,
   formatCurrency,
 } from "@/lib/data";
+
+// Types for real dashboard data
+interface DashboardCounty {
+  name: string;
+  state: string;
+  medianIncome: number;
+  medianHomeValue: number;
+  medianAge: number;
+  population: number;
+  propertyCount?: number;
+}
+
+interface SECInsider {
+  cik: string;
+  name: string;
+  companyName: string;
+  formType: string;
+  filingDate: string;
+  state?: string;
+}
+
+interface DashboardData {
+  counties: DashboardCounty[];
+  secInsiders: SECInsider[];
+  highIncomeZips: Array<{
+    state: string;
+    count: number;
+    topZips: Array<{
+      zipCode: string;
+      medianIncome: number;
+      medianHomeValue: number;
+      medianAge: number;
+    }>;
+  }>;
+  supabaseStats: {
+    totalCounties: number;
+    totalProperties: number;
+    totalDocuments: number;
+    recentScraperRuns: Array<{
+      id: string;
+      county: string;
+      status: string;
+      recordsProcessed: number;
+      completedAt: string | null;
+    }>;
+  };
+  lastUpdated: string;
+}
 import { Collapse } from "@/components/ui/Collapse";
 import { MetricBox } from "@/components/ui/MetricBox";
 import { GlowBar } from "@/components/ui/GlowBar";
@@ -81,10 +129,43 @@ const ANNUITY_PROFILES = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("command");
   const [mounted, setMounted] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch real data from the dashboard API
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch("/api/dashboard");
+      const result = await response.json();
+      if (result.success && result.data) {
+        setDashboardData(result.data);
+      } else {
+        setError(result.error || "Failed to fetch data");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Format currency helper
+  const fmtCurrency = (value: number): string => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    }
+    return `$${value.toLocaleString()}`;
+  };
 
   const totalSignals = countSignals();
   const annuitySignals = countAnnuitySignals();
@@ -263,6 +344,58 @@ export default function Home() {
           {/* COMMAND CENTER TAB */}
           {activeTab === "command" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {/* Data Status Banner */}
+              {dashboardData && (
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    background: `${C.green}15`,
+                    border: `1px solid ${C.green}40`,
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: C.green,
+                        animation: "pulse 2s infinite",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontFamily: fonts.mono,
+                        color: C.green,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Live Census + SEC Data
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontFamily: fonts.mono,
+                      color: C.textMuted,
+                    }}
+                  >
+                    Last updated:{" "}
+                    {new Date(dashboardData.lastUpdated).toLocaleString()}
+                  </span>
+                </div>
+              )}
+
               {/* Top Metrics */}
               <div
                 style={{
@@ -273,18 +406,26 @@ export default function Home() {
               >
                 <MetricBox
                   label="Properties Indexed"
-                  value="5.4M+"
+                  value={
+                    dashboardData?.supabaseStats.totalProperties || "5.4M+"
+                  }
                   color={C.cyan}
                 />
-                <MetricBox label="Free & Clear" value="1.5M+" color={C.green} />
+                <MetricBox
+                  label="Counties Tracked"
+                  value={
+                    dashboardData?.counties.length || TARGET_COUNTIES.length
+                  }
+                  color={C.green}
+                />
                 <MetricBox
                   label="Pipeline Value"
                   value={formatCurrency(totalPipelineEquity)}
                   color={C.gold}
                 />
                 <MetricBox
-                  label="Avg Lead Score"
-                  value={averageScore}
+                  label="SEC Insiders"
+                  value={dashboardData?.secInsiders.length || 0}
                   color={C.orange}
                 />
                 <MetricBox
@@ -293,6 +434,151 @@ export default function Home() {
                   color={C.purple}
                 />
               </div>
+
+              {/* Real Census Data Section */}
+              {dashboardData && dashboardData.counties.length > 0 && (
+                <div>
+                  <h3
+                    style={{
+                      margin: "0 0 12px",
+                      fontSize: 11,
+                      fontFamily: fonts.mono,
+                      color: C.green,
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ color: C.green }}>●</span> Live Census ACS
+                    Data
+                  </h3>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: 12,
+                    }}
+                  >
+                    {dashboardData.counties.map((county, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: 16,
+                          background: C.card,
+                          border: `1px solid ${C.green}40`,
+                          borderRadius: 6,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            marginBottom: 12,
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 16,
+                                fontFamily: fonts.heading,
+                                color: C.white,
+                              }}
+                            >
+                              {county.name}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                fontFamily: fonts.body,
+                                color: C.textMuted,
+                              }}
+                            >
+                              {county.state} · Pop:{" "}
+                              {county.population.toLocaleString()}
+                            </div>
+                          </div>
+                          <Tag color={C.green}>LIVE</Tag>
+                        </div>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr 1fr",
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 8,
+                                fontFamily: fonts.mono,
+                                color: C.textDim,
+                                letterSpacing: 1,
+                              }}
+                            >
+                              MED INCOME
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 14,
+                                fontFamily: fonts.heading,
+                                color: C.gold,
+                              }}
+                            >
+                              {fmtCurrency(county.medianIncome)}
+                            </div>
+                          </div>
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 8,
+                                fontFamily: fonts.mono,
+                                color: C.textDim,
+                                letterSpacing: 1,
+                              }}
+                            >
+                              HOME VALUE
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 14,
+                                fontFamily: fonts.heading,
+                                color: C.cyan,
+                              }}
+                            >
+                              {fmtCurrency(county.medianHomeValue)}
+                            </div>
+                          </div>
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 8,
+                                fontFamily: fonts.mono,
+                                color: C.textDim,
+                                letterSpacing: 1,
+                              }}
+                            >
+                              MED AGE
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 14,
+                                fontFamily: fonts.heading,
+                                color: C.orange,
+                              }}
+                            >
+                              {county.medianAge.toFixed(1)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* County Overview */}
               <div>
@@ -495,6 +781,107 @@ export default function Home() {
                     ))}
                 </div>
               </div>
+
+              {/* SEC Insider Transactions (Live Data) */}
+              {dashboardData && dashboardData.secInsiders.length > 0 && (
+                <div>
+                  <h3
+                    style={{
+                      margin: "0 0 12px",
+                      fontSize: 11,
+                      fontFamily: fonts.mono,
+                      color: C.orange,
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ color: C.orange }}>●</span> SEC EDGAR -
+                    Recent Form 4 Filings
+                  </h3>
+                  <div
+                    style={{
+                      background: C.card,
+                      border: `1px solid ${C.orange}30`,
+                      borderRadius: 6,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "2fr 2fr 1fr 100px",
+                        gap: 12,
+                        padding: "10px 16px",
+                        background: `${C.orange}10`,
+                        borderBottom: `1px solid ${C.border}`,
+                        fontSize: 9,
+                        fontFamily: fonts.mono,
+                        color: C.textMuted,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      <div>Insider</div>
+                      <div>Company</div>
+                      <div>State</div>
+                      <div>Filed</div>
+                    </div>
+                    {dashboardData.secInsiders
+                      .slice(0, 8)
+                      .map((insider, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "2fr 2fr 1fr 100px",
+                            gap: 12,
+                            padding: "10px 16px",
+                            borderBottom:
+                              idx < 7 ? `1px solid ${C.border}` : "none",
+                            fontSize: 12,
+                            fontFamily: fonts.body,
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: C.text,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {insider.name || "N/A"}
+                          </div>
+                          <div
+                            style={{
+                              color: C.textMuted,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {insider.companyName || "N/A"}
+                          </div>
+                          <div style={{ color: C.cyan }}>
+                            {insider.state || "—"}
+                          </div>
+                          <div
+                            style={{
+                              color: C.textDim,
+                              fontFamily: fonts.mono,
+                              fontSize: 10,
+                            }}
+                          >
+                            {insider.filingDate || "—"}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               {/* Scraper Fleet Status */}
               <div>
