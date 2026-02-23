@@ -234,3 +234,29 @@ export interface Pricing {
   enterprise: PricingTier;
   custom: PricingTier;
 }
+
+// =============================================================================
+// LEAD TYPES
+// =============================================================================
+
+export type LeadTier = "SOVEREIGN" | "OPERATOR" | "DELEGATOR";
+export type LeadType = "Individual" | "Trust" | "LLC" | "Corporation";
+
+export interface Lead {
+  id: string;
+  name: string;
+  type: LeadType;
+  county: string;
+  state: string;
+  address: string;
+  value: number;
+  equity: number;
+  equityPct: number;
+  signals: string[];
+  score: number;
+  timing: string;
+  annuityProbability: number;
+  recommended: string;
+  tier: LeadTier;
+  createdAt: string;
+}

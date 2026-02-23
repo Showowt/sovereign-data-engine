@@ -6,6 +6,18 @@
 // Signal data
 export { SIGNALS, countSignals, countAnnuitySignals } from "./signals";
 
+// Lead data
+export {
+  DEMO_LEADS,
+  getLeadsByTier,
+  getLeadsByCounty,
+  getUrgentLeads,
+  getAnnuityTargets,
+  getTotalPipelineEquity,
+  getAverageScore,
+  formatCurrency,
+} from "./leads";
+
 // Target counties
 export {
   TARGET_COUNTIES,
@@ -86,4 +98,7 @@ export type {
   Pricing,
   TimingWindow,
   ScraperSpec,
+  Lead,
+  LeadTier,
+  LeadType,
 } from "../types";

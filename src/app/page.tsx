@@ -9,34 +9,41 @@ import {
   SCRAPER_FLEET,
   ENTITY_RESOLUTION,
   ENTITY_EXAMPLES,
-  COMPARISON_TABLE,
-  SOVEREIGN_ADVANTAGES,
+  DEMO_LEADS,
   countSignals,
   countAnnuitySignals,
   countScraperTargets,
+  getTotalPipelineEquity,
+  getAverageScore,
+  getUrgentLeads,
+  getAnnuityTargets,
+  formatCurrency,
 } from "@/lib/data";
 import { Collapse } from "@/components/ui/Collapse";
 import { MetricBox } from "@/components/ui/MetricBox";
 import { GlowBar } from "@/components/ui/GlowBar";
 import { Tag } from "@/components/ui/Tag";
 import { SignalCardSimple } from "@/components/cards/SignalCardSimple";
+import { LeadCard } from "@/components/cards/LeadCard";
 import type { ScraperTarget, ScraperFleetItem, Signal } from "@/lib/types";
 
 type TabKey =
-  | "overview"
+  | "command"
+  | "leads"
   | "signals"
   | "counties"
   | "annuity"
   | "scrapers"
   | "entity";
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "overview", label: "Overview" },
-  { key: "signals", label: "Signals" },
-  { key: "counties", label: "Counties" },
-  { key: "annuity", label: "Annuity" },
-  { key: "scrapers", label: "Scrapers" },
-  { key: "entity", label: "Entity" },
+const TABS: { key: TabKey; label: string; icon: string }[] = [
+  { key: "command", label: "Command Center", icon: "⚡" },
+  { key: "leads", label: "Lead Pipeline", icon: "🎯" },
+  { key: "signals", label: "Signal Taxonomy", icon: "📡" },
+  { key: "counties", label: "Target Counties", icon: "🗺" },
+  { key: "annuity", label: "Annuity Engine", icon: "💰" },
+  { key: "scrapers", label: "Scraper Fleet", icon: "⚙" },
+  { key: "entity", label: "Entity Resolution", icon: "🔗" },
 ];
 
 // Annuity profile information
@@ -46,7 +53,6 @@ const ANNUITY_PROFILES = [
     description:
       "Annuity owners approaching the end of their surrender period (typically 7-10 years). These individuals can now access their funds penalty-free and are evaluating whether to stay or exchange.",
     signals: ["Surrender Period Ending", "Variable Annuity in Down Market"],
-    icon: "clock",
     color: C.gold,
   },
   {
@@ -54,7 +60,6 @@ const ANNUITY_PROFILES = [
     description:
       "Annuity owners whose original selling agent has retired, passed away, or left the business. They receive no ongoing service and may not know their options.",
     signals: ["Orphaned Annuity", "Agent No Longer Active"],
-    icon: "user-x",
     color: C.orange,
   },
   {
@@ -62,7 +67,6 @@ const ANNUITY_PROFILES = [
     description:
       "Age 70+ annuity owners who need to make RMD decisions and may not understand their distribution options. Legacy planning becomes a priority.",
     signals: ["Age 70+ with Deferred Annuity", "RMD Considerations"],
-    icon: "calendar",
     color: C.cyan,
   },
   {
@@ -70,13 +74,12 @@ const ANNUITY_PROFILES = [
     description:
       "Individuals actively searching online for 1035 exchange information, annuity fee comparisons, or surrender calculators. High intent, looking for guidance.",
     signals: ["1035 Exchange Search Intent", "Content Engagement"],
-    icon: "search",
     color: C.purple,
   },
 ];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [activeTab, setActiveTab] = useState<TabKey>("command");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -86,6 +89,10 @@ export default function Home() {
   const totalSignals = countSignals();
   const annuitySignals = countAnnuitySignals();
   const scraperTargets = countScraperTargets();
+  const totalPipelineEquity = getTotalPipelineEquity();
+  const averageScore = getAverageScore();
+  const urgentLeads = getUrgentLeads();
+  const annuityTargets = getAnnuityTargets(70);
 
   return (
     <>
@@ -120,7 +127,6 @@ export default function Home() {
             margin: "0 auto",
           }}
         >
-          {/* Tag Line */}
           <div
             style={{
               display: "flex",
@@ -154,7 +160,6 @@ export default function Home() {
             </span>
           </div>
 
-          {/* Title */}
           <h1
             style={{
               margin: 0,
@@ -170,68 +175,30 @@ export default function Home() {
             <span style={{ color: C.gold }}> v2.0</span>
           </h1>
 
-          {/* Subtitle */}
           <p
             style={{
               margin: "16px 0 0",
-              fontSize: 16,
+              fontSize: 14,
               fontFamily: fonts.body,
               color: C.textMuted,
               maxWidth: 700,
               lineHeight: 1.6,
             }}
           >
-            Intelligence platform for high-equity property owners and annuity
-            holders. 100% legal public records acquisition with real-time
-            monitoring, multi-source entity resolution, and actionable prospect
-            scoring.
+            {totalSignals} signals · {TARGET_COUNTIES.length} counties · 26+
+            data sources · Entity resolution · Behavioral scoring · Timing
+            predictions
           </p>
 
-          <div style={{ marginTop: 32 }}>
+          <div style={{ marginTop: 24 }}>
             <GlowBar />
           </div>
         </header>
 
-        {/* Metrics Row */}
-        <section
-          style={{
-            padding: "32px 24px",
-            maxWidth: 1400,
-            margin: "0 auto",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-              gap: 16,
-            }}
-          >
-            <MetricBox
-              label="Total Signals"
-              value={totalSignals}
-              color={C.gold}
-            />
-            <MetricBox label="Target Counties" value={6} color={C.cyan} />
-            <MetricBox label="Data Sources" value="26+" color={C.purple} />
-            <MetricBox
-              label="Annuity Signals"
-              value={annuitySignals}
-              color={C.orange}
-            />
-            <MetricBox
-              label="Scraper Targets"
-              value={scraperTargets}
-              color={C.cyan}
-            />
-            <MetricBox label="Legal Status" value="100%" color={C.green} />
-          </div>
-        </section>
-
         {/* Tab Navigation */}
         <nav
           style={{
-            padding: "0 24px",
+            padding: "16px 24px 0",
             maxWidth: 1400,
             margin: "0 auto",
             borderBottom: `1px solid ${C.border}`,
@@ -250,17 +217,19 @@ export default function Home() {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  padding: "14px 20px",
-                  background: activeTab === tab.key ? C.surface : "transparent",
-                  border: "none",
-                  borderBottom:
+                  padding: "10px 14px",
+                  background:
+                    activeTab === tab.key ? `${C.gold}14` : "transparent",
+                  border:
                     activeTab === tab.key
-                      ? `2px solid ${C.gold}`
-                      : "2px solid transparent",
+                      ? `1px solid ${C.gold}28`
+                      : "1px solid transparent",
+                  borderBottom: "none",
+                  borderRadius: "6px 6px 0 0",
                   cursor: "pointer",
-                  fontSize: 12,
+                  fontSize: 10,
                   fontFamily: fonts.mono,
-                  letterSpacing: 1,
+                  letterSpacing: 1.2,
                   textTransform: "uppercase",
                   color: activeTab === tab.key ? C.gold : C.textMuted,
                   transition: "all 0.2s ease",
@@ -277,7 +246,7 @@ export default function Home() {
                   }
                 }}
               >
-                {tab.label}
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
@@ -291,226 +260,373 @@ export default function Home() {
             margin: "0 auto",
           }}
         >
-          {/* OVERVIEW TAB */}
-          {activeTab === "overview" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 48 }}>
-              {/* Problem vs Solution Grid */}
+          {/* COMMAND CENTER TAB */}
+          {activeTab === "command" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {/* Top Metrics */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                  gap: 24,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: 12,
                 }}
               >
-                {/* The Problem */}
-                <div
-                  style={{
-                    padding: 24,
-                    background: C.card,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 6,
-                  }}
-                >
-                  <h2
-                    style={{
-                      margin: "0 0 20px",
-                      fontSize: 20,
-                      fontFamily: fonts.heading,
-                      color: C.red,
-                    }}
-                  >
-                    The Problem
-                  </h2>
-                  <ul
-                    style={{
-                      margin: 0,
-                      padding: 0,
-                      listStyle: "none",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                    }}
-                  >
-                    {[
-                      "PropStream and competitors provide stale, batch-updated data",
-                      "No real-time monitoring of mortgage satisfactions or life events",
-                      "Zero visibility into annuity surrender windows",
-                      "No entity resolution across multiple data sources",
-                      "Expensive enterprise pricing excludes independent advisors",
-                      "Unclear data sourcing raises legal questions",
-                    ].map((item, idx) => (
-                      <li
-                        key={idx}
-                        style={{
-                          fontSize: 13,
-                          fontFamily: fonts.body,
-                          color: C.text,
-                          paddingLeft: 18,
-                          position: "relative",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        <span
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            color: C.red,
-                            fontSize: 14,
-                          }}
-                        >
-                          ×
-                        </span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <MetricBox
+                  label="Properties Indexed"
+                  value="5.4M+"
+                  color={C.cyan}
+                />
+                <MetricBox label="Free & Clear" value="1.5M+" color={C.green} />
+                <MetricBox
+                  label="Pipeline Value"
+                  value={formatCurrency(totalPipelineEquity)}
+                  color={C.gold}
+                />
+                <MetricBox
+                  label="Avg Lead Score"
+                  value={averageScore}
+                  color={C.orange}
+                />
+                <MetricBox
+                  label="Signals Active"
+                  value={totalSignals}
+                  color={C.purple}
+                />
+              </div>
 
-                {/* The Sovereign Difference */}
-                <div
+              {/* County Overview */}
+              <div>
+                <h3
                   style={{
-                    padding: 24,
-                    background: C.card,
-                    border: `1px solid ${C.gold}30`,
-                    borderRadius: 6,
+                    margin: "0 0 12px",
+                    fontSize: 11,
+                    fontFamily: fonts.mono,
+                    color: C.textMuted,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
                   }}
                 >
-                  <h2
-                    style={{
-                      margin: "0 0 20px",
-                      fontSize: 20,
-                      fontFamily: fonts.heading,
-                      color: C.gold,
-                    }}
-                  >
-                    The Sovereign Difference
-                  </h2>
-                  <ul
-                    style={{
-                      margin: 0,
-                      padding: 0,
-                      listStyle: "none",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                    }}
-                  >
-                    {SOVEREIGN_ADVANTAGES.map((adv, idx) => (
-                      <li
-                        key={idx}
+                  Target County Overview
+                </h3>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                    gap: 12,
+                  }}
+                >
+                  {TARGET_COUNTIES.map((county, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: 16,
+                        background: C.card,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        transition: "border-color 0.2s ease",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.borderColor = `${C.gold}40`)
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.borderColor = C.border)
+                      }
+                    >
+                      <div
                         style={{
-                          fontSize: 13,
-                          fontFamily: fonts.body,
-                          color: C.text,
-                          paddingLeft: 18,
-                          position: "relative",
-                          lineHeight: 1.5,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: 12,
                         }}
                       >
-                        <span
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            color: C.gold,
-                            fontSize: 14,
-                          }}
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 16,
+                              fontFamily: fonts.heading,
+                              color: C.white,
+                            }}
+                          >
+                            {county.county}, {county.state}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontFamily: fonts.body,
+                              color: C.textMuted,
+                            }}
+                          >
+                            {county.city}
+                          </div>
+                        </div>
+                        <Tag
+                          color={
+                            county.annuityDensity.includes("EXTREME")
+                              ? C.red
+                              : county.annuityDensity.includes("HIGH")
+                                ? C.orange
+                                : C.textMuted
+                          }
                         >
-                          +
-                        </span>
-                        <strong style={{ color: C.white }}>
-                          {adv.advantage}:
-                        </strong>{" "}
-                        {adv.description}
-                      </li>
-                    ))}
-                  </ul>
+                          {county.annuityDensity}
+                        </Tag>
+                      </div>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr 1fr",
+                          gap: 8,
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 8,
+                              fontFamily: fonts.mono,
+                              color: C.textDim,
+                              letterSpacing: 1,
+                            }}
+                          >
+                            MED VALUE
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 14,
+                              fontFamily: fonts.heading,
+                              color: C.text,
+                            }}
+                          >
+                            {county.medianValue}
+                          </div>
+                        </div>
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 8,
+                              fontFamily: fonts.mono,
+                              color: C.textDim,
+                              letterSpacing: 1,
+                            }}
+                          >
+                            EQUITY
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 14,
+                              fontFamily: fonts.heading,
+                              color: C.gold,
+                            }}
+                          >
+                            {county.medianEquity}
+                          </div>
+                        </div>
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 8,
+                              fontFamily: fonts.mono,
+                              color: C.textDim,
+                              letterSpacing: 1,
+                            }}
+                          >
+                            EQ %
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 14,
+                              fontFamily: fonts.heading,
+                              color: C.green,
+                            }}
+                          >
+                            {county.equityPct}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 4,
+                          marginTop: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {county.assessorOnline && (
+                          <Tag color={C.green}>✓ Assessor</Tag>
+                        )}
+                        {county.recorderOnline && (
+                          <Tag color={C.green}>✓ Recorder</Tag>
+                        )}
+                        {county.satisfactionSearch && (
+                          <Tag color={C.green}>✓ Sat Search</Tag>
+                        )}
+                        {county.techWealth && (
+                          <Tag color={C.purple}>Tech Wealth</Tag>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Comparison Table */}
+              {/* Top Priority Leads */}
               <div>
-                <h2
+                <h3
                   style={{
-                    margin: "0 0 20px",
-                    fontSize: 24,
-                    fontFamily: fonts.heading,
-                    color: C.white,
+                    margin: "0 0 12px",
+                    fontSize: 11,
+                    fontFamily: fonts.mono,
+                    color: C.textMuted,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
                   }}
                 >
-                  Head-to-Head Comparison
-                </h2>
+                  Highest Priority Leads
+                </h3>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
+                  {[...DEMO_LEADS]
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 3)
+                    .map((lead) => (
+                      <LeadCard key={lead.id} lead={lead} />
+                    ))}
+                </div>
+              </div>
+
+              {/* Scraper Fleet Status */}
+              <div>
+                <h3
+                  style={{
+                    margin: "0 0 12px",
+                    fontSize: 11,
+                    fontFamily: fonts.mono,
+                    color: C.textMuted,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Scraper Fleet Status
+                </h3>
                 <div
                   style={{
-                    overflowX: "auto",
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 6,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                    gap: 10,
                   }}
                 >
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      minWidth: 700,
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        {COMPARISON_TABLE.headers.map((header, idx) => (
-                          <th
-                            key={idx}
+                  {Object.entries(SCRAPER_FLEET).map(([key, scraper]) => {
+                    const s = scraper as ScraperFleetItem;
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          padding: 12,
+                          background: C.card,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 4,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontFamily: fonts.body,
+                            color: C.text,
+                            fontWeight: 600,
+                            marginBottom: 6,
+                          }}
+                        >
+                          {s.name.split(" ").slice(0, 2).join(" ")}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <div
                             style={{
-                              padding: "14px 16px",
-                              background: C.surface,
-                              borderBottom: `1px solid ${C.border}`,
-                              textAlign: "left",
-                              fontSize: 11,
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: C.green,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: 10,
                               fontFamily: fonts.mono,
-                              letterSpacing: 1,
-                              textTransform: "uppercase",
-                              color: idx === 1 ? C.gold : C.textMuted,
-                              fontWeight: 500,
+                              color: C.green,
                             }}
                           >
-                            {header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {COMPARISON_TABLE.rows.map((row, rowIdx) => (
-                        <tr key={rowIdx}>
-                          {row.map((cell, cellIdx) => (
-                            <td
-                              key={cellIdx}
-                              style={{
-                                padding: "12px 16px",
-                                borderBottom:
-                                  rowIdx < COMPARISON_TABLE.rows.length - 1
-                                    ? `1px solid ${C.border}`
-                                    : "none",
-                                fontSize: 13,
-                                fontFamily:
-                                  cellIdx === 0 ? fonts.body : fonts.mono,
-                                color:
-                                  cellIdx === 0
-                                    ? C.text
-                                    : cell === "YES"
-                                      ? C.green
-                                      : cell === "No"
-                                        ? C.red
-                                        : C.textMuted,
-                                background:
-                                  cellIdx === 1 ? `${C.gold}08` : "transparent",
-                              }}
-                            >
-                              {cell}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontFamily: fonts.mono,
+                            color: C.textMuted,
+                            marginTop: 4,
+                          }}
+                        >
+                          {s.frequency}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* LEAD PIPELINE TAB */}
+          {activeTab === "leads" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                <MetricBox
+                  label="Total Pipeline"
+                  value={DEMO_LEADS.length}
+                  color={C.gold}
+                />
+                <MetricBox
+                  label="Pipeline Equity"
+                  value={formatCurrency(totalPipelineEquity)}
+                  color={C.green}
+                />
+                <MetricBox
+                  label="Avg Score"
+                  value={averageScore}
+                  color={C.orange}
+                />
+                <MetricBox
+                  label="Annuity Targets"
+                  value={annuityTargets.length}
+                  color={C.orange}
+                />
+                <MetricBox
+                  label="Urgent"
+                  value={urgentLeads.length}
+                  color={C.red}
+                />
+              </div>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {[...DEMO_LEADS]
+                  .sort((a, b) => b.score - a.score)
+                  .map((lead) => (
+                    <LeadCard key={lead.id} lead={lead} />
+                  ))}
               </div>
             </div>
           )}
@@ -518,6 +634,26 @@ export default function Home() {
           {/* SIGNALS TAB */}
           {activeTab === "signals" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                <MetricBox
+                  label="Total Signals"
+                  value={totalSignals}
+                  color={C.gold}
+                />
+                <MetricBox
+                  label="Annuity Signals"
+                  value={annuitySignals}
+                  color={C.orange}
+                />
+                <MetricBox label="Data Sources" value="26+" color={C.purple} />
+                <MetricBox label="Legal Status" value="100%" color={C.green} />
+              </div>
               {Object.entries(SIGNALS).map(([key, category]) => (
                 <Collapse
                   key={key}
@@ -553,9 +689,8 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               <p
                 style={{
-                  margin: "0 0 16px",
+                  margin: 0,
                   fontSize: 14,
-                  fontFamily: fonts.body,
                   color: C.textMuted,
                   lineHeight: 1.6,
                 }}
@@ -564,7 +699,6 @@ export default function Home() {
                 accessible public records, and favorable demographic profiles
                 for wealth management.
               </p>
-
               {TARGET_COUNTIES.map((county, idx) => (
                 <Collapse
                   key={idx}
@@ -580,7 +714,6 @@ export default function Home() {
                       gap: 20,
                     }}
                   >
-                    {/* Metrics Row */}
                     <div
                       style={{
                         display: "grid",
@@ -683,129 +816,6 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-
-                    {/* Access Status */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(200px, 1fr))",
-                        gap: 12,
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: "14px 16px",
-                          background: county.assessorOnline
-                            ? `${C.greenDim}20`
-                            : C.card,
-                          borderRadius: 4,
-                          border: `1px solid ${county.assessorOnline ? `${C.greenDim}40` : C.border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 8,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              background: county.assessorOnline
-                                ? C.green
-                                : C.red,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: 12,
-                              fontFamily: fonts.body,
-                              color: county.assessorOnline
-                                ? C.green
-                                : C.textMuted,
-                            }}
-                          >
-                            Assessor Online
-                          </span>
-                        </div>
-                        <a
-                          href={county.assessorUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            fontSize: 11,
-                            fontFamily: fonts.mono,
-                            color: C.cyan,
-                            textDecoration: "none",
-                            wordBreak: "break-all",
-                          }}
-                        >
-                          {county.assessorUrl.replace(/^https?:\/\//, "")}
-                        </a>
-                      </div>
-                      <div
-                        style={{
-                          padding: "14px 16px",
-                          background: county.recorderOnline
-                            ? `${C.greenDim}20`
-                            : C.card,
-                          borderRadius: 4,
-                          border: `1px solid ${county.recorderOnline ? `${C.greenDim}40` : C.border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            marginBottom: 8,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              background: county.recorderOnline
-                                ? C.green
-                                : C.red,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: 12,
-                              fontFamily: fonts.body,
-                              color: county.recorderOnline
-                                ? C.green
-                                : C.textMuted,
-                            }}
-                          >
-                            Recorder Online
-                          </span>
-                        </div>
-                        <a
-                          href={county.recorderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            fontSize: 11,
-                            fontFamily: fonts.mono,
-                            color: C.cyan,
-                            textDecoration: "none",
-                            wordBreak: "break-all",
-                          }}
-                        >
-                          {county.recorderUrl.replace(/^https?:\/\//, "")}
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* Feature Tags */}
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                       {county.bulkDownload && (
                         <Tag color={C.green}>Bulk Download</Tag>
@@ -817,45 +827,6 @@ export default function Home() {
                         <Tag color={C.gold}>Satisfaction Search</Tag>
                       )}
                     </div>
-
-                    {/* Signals */}
-                    <div>
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: 10,
-                          fontFamily: fonts.mono,
-                          color: C.textMuted,
-                          letterSpacing: 1,
-                          textTransform: "uppercase",
-                          marginBottom: 10,
-                        }}
-                      >
-                        Market Signals
-                      </span>
-                      <div
-                        style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
-                      >
-                        {county.signals.map((signal, sIdx) => (
-                          <span
-                            key={sIdx}
-                            style={{
-                              fontSize: 11,
-                              fontFamily: fonts.body,
-                              color: C.text,
-                              padding: "6px 10px",
-                              background: C.card,
-                              borderRadius: 4,
-                              border: `1px solid ${C.border}`,
-                            }}
-                          >
-                            {signal}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Annuity Density */}
                     <div
                       style={{
                         padding: "12px 16px",
@@ -888,8 +859,6 @@ export default function Home() {
                         {county.annuityDensity}
                       </p>
                     </div>
-
-                    {/* Scrape Notes */}
                     <div
                       style={{
                         padding: "12px 16px",
@@ -931,7 +900,6 @@ export default function Home() {
           {/* ANNUITY TAB */}
           {activeTab === "annuity" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-              {/* Intro */}
               <div
                 style={{
                   padding: 24,
@@ -966,8 +934,6 @@ export default function Home() {
                   agent.
                 </p>
               </div>
-
-              {/* Profile Cards */}
               <div>
                 <h3
                   style={{
@@ -1031,8 +997,6 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-
-              {/* Annuity Signals */}
               <div>
                 <h3
                   style={{
@@ -1067,20 +1031,25 @@ export default function Home() {
           {/* SCRAPERS TAB */}
           {activeTab === "scrapers" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              <p
+              <div
                 style={{
-                  margin: "0 0 16px",
-                  fontSize: 14,
-                  fontFamily: fonts.body,
-                  color: C.textMuted,
-                  lineHeight: 1.6,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: 12,
                 }}
               >
-                Six specialized scrapers continuously acquire public records
-                data from county offices, courts, SEC filings, and professional
-                databases.
-              </p>
-
+                <MetricBox
+                  label="Total Scrapers"
+                  value={Object.keys(SCRAPER_FLEET).length}
+                  color={C.purple}
+                />
+                <MetricBox
+                  label="Counties Covered"
+                  value={TARGET_COUNTIES.length}
+                  color={C.cyan}
+                />
+                <MetricBox label="Est. Records" value="5.4M+" color={C.green} />
+              </div>
               {Object.entries(SCRAPER_FLEET).map(([key, scraper]) => {
                 const s = scraper as ScraperFleetItem;
                 return (
@@ -1098,7 +1067,6 @@ export default function Home() {
                         gap: 16,
                       }}
                     >
-                      {/* Tech Stack */}
                       <div
                         style={{
                           display: "flex",
@@ -1127,8 +1095,6 @@ export default function Home() {
                           {s.tech}
                         </span>
                       </div>
-
-                      {/* Targets */}
                       <div>
                         <span
                           style={{
@@ -1152,10 +1118,6 @@ export default function Home() {
                               typeof target === "string"
                                 ? target
                                 : (target as ScraperTarget).name;
-                            const method =
-                              typeof target === "object"
-                                ? (target as ScraperTarget).method
-                                : null;
                             return (
                               <div
                                 key={idx}
@@ -1175,26 +1137,11 @@ export default function Home() {
                                 >
                                   {targetStr}
                                 </span>
-                                {method && (
-                                  <span
-                                    style={{
-                                      display: "block",
-                                      fontSize: 10,
-                                      fontFamily: fonts.mono,
-                                      color: C.cyan,
-                                      marginTop: 4,
-                                    }}
-                                  >
-                                    {method}
-                                  </span>
-                                )}
                               </div>
                             );
                           })}
                         </div>
                       </div>
-
-                      {/* Fields */}
                       {s.fields && s.fields.length > 0 && (
                         <div>
                           <span
@@ -1235,50 +1182,6 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-
-                      {/* Document Types */}
-                      {s.documentTypes && s.documentTypes.length > 0 && (
-                        <div>
-                          <span
-                            style={{
-                              display: "block",
-                              fontSize: 10,
-                              fontFamily: fonts.mono,
-                              color: C.textMuted,
-                              letterSpacing: 1,
-                              textTransform: "uppercase",
-                              marginBottom: 10,
-                            }}
-                          >
-                            Document Types
-                          </span>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 6,
-                            }}
-                          >
-                            {s.documentTypes.map((docType, idx) => (
-                              <span
-                                key={idx}
-                                style={{
-                                  fontSize: 11,
-                                  fontFamily: fonts.mono,
-                                  color: C.cyan,
-                                  padding: "4px 8px",
-                                  background: `${C.cyanDim}30`,
-                                  borderRadius: 3,
-                                }}
-                              >
-                                {docType}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Storage & Volume */}
                       <div
                         style={{
                           display: "grid",
@@ -1352,106 +1255,6 @@ export default function Home() {
                           </div>
                         )}
                       </div>
-
-                      {/* Key Logic / Filter / Enrichment */}
-                      {(s.keyLogic || s.filter || s.enrichment) && (
-                        <div
-                          style={{
-                            padding: "14px 16px",
-                            background: C.card,
-                            borderRadius: 4,
-                            borderLeft: `3px solid ${C.gold}`,
-                          }}
-                        >
-                          {s.keyLogic && (
-                            <div
-                              style={{
-                                marginBottom: s.filter || s.enrichment ? 12 : 0,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  display: "block",
-                                  fontSize: 9,
-                                  fontFamily: fonts.mono,
-                                  color: C.gold,
-                                  letterSpacing: 1,
-                                  textTransform: "uppercase",
-                                  marginBottom: 4,
-                                }}
-                              >
-                                Key Logic
-                              </span>
-                              <p
-                                style={{
-                                  margin: 0,
-                                  fontSize: 12,
-                                  fontFamily: fonts.body,
-                                  color: C.text,
-                                }}
-                              >
-                                {s.keyLogic}
-                              </p>
-                            </div>
-                          )}
-                          {s.filter && (
-                            <div
-                              style={{ marginBottom: s.enrichment ? 12 : 0 }}
-                            >
-                              <span
-                                style={{
-                                  display: "block",
-                                  fontSize: 9,
-                                  fontFamily: fonts.mono,
-                                  color: C.cyan,
-                                  letterSpacing: 1,
-                                  textTransform: "uppercase",
-                                  marginBottom: 4,
-                                }}
-                              >
-                                Filter
-                              </span>
-                              <p
-                                style={{
-                                  margin: 0,
-                                  fontSize: 12,
-                                  fontFamily: fonts.body,
-                                  color: C.text,
-                                }}
-                              >
-                                {s.filter}
-                              </p>
-                            </div>
-                          )}
-                          {s.enrichment && (
-                            <div>
-                              <span
-                                style={{
-                                  display: "block",
-                                  fontSize: 9,
-                                  fontFamily: fonts.mono,
-                                  color: C.purple,
-                                  letterSpacing: 1,
-                                  textTransform: "uppercase",
-                                  marginBottom: 4,
-                                }}
-                              >
-                                Enrichment
-                              </span>
-                              <p
-                                style={{
-                                  margin: 0,
-                                  fontSize: 12,
-                                  fontFamily: fonts.body,
-                                  color: C.text,
-                                }}
-                              >
-                                {s.enrichment}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </Collapse>
                 );
@@ -1462,7 +1265,6 @@ export default function Home() {
           {/* ENTITY TAB */}
           {activeTab === "entity" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-              {/* Description */}
               <div
                 style={{
                   padding: 24,
@@ -1493,8 +1295,6 @@ export default function Home() {
                   {ENTITY_RESOLUTION.description}
                 </p>
               </div>
-
-              {/* Example */}
               <div
                 style={{
                   padding: "16px 20px",
@@ -1528,8 +1328,6 @@ export default function Home() {
                   {ENTITY_RESOLUTION.example}
                 </p>
               </div>
-
-              {/* Matching Layers */}
               <div>
                 <h3
                   style={{
@@ -1611,8 +1409,6 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-
-              {/* Output Profile Schema */}
               <div>
                 <h3
                   style={{
@@ -1706,8 +1502,6 @@ export default function Home() {
                   </table>
                 </div>
               </div>
-
-              {/* Example Scenarios */}
               <div>
                 <h3
                   style={{
@@ -1801,13 +1595,7 @@ export default function Home() {
             gap: 16,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span
               style={{
                 fontSize: 10,
@@ -1831,11 +1619,7 @@ export default function Home() {
             </span>
           </div>
           <div
-            style={{
-              fontSize: 11,
-              fontFamily: fonts.mono,
-              color: C.textDim,
-            }}
+            style={{ fontSize: 11, fontFamily: fonts.mono, color: C.textDim }}
           >
             100% Legal Public Records Only
           </div>

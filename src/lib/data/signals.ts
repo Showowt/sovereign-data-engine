@@ -448,6 +448,61 @@ export const SIGNALS: SignalsData = {
         ],
         keyLicenses: ["Life Insurance", "Annuity", "Variable Products"],
       },
+      {
+        name: "CDSC Expiration Timing Map",
+        source: "Market Analysis + Product Modeling",
+        cost: "Free",
+        legality: "100% Legal - Pure Intelligence",
+        strength: "Very High",
+        description:
+          "2016-2021 was massive annuity sales period. Those surrender periods are expiring NOW. Trillions of dollars newly free.",
+        timingWindows: [
+          {
+            purchaseYear: "2016",
+            surrenderPeriod: "10 years",
+            freeDate: "2026",
+            status: "NOW",
+            volume: "High",
+          },
+          {
+            purchaseYear: "2017",
+            surrenderPeriod: "8 years",
+            freeDate: "2025",
+            status: "NOW",
+            volume: "High",
+          },
+          {
+            purchaseYear: "2018",
+            surrenderPeriod: "7 years",
+            freeDate: "2025",
+            status: "NOW",
+            volume: "Very High",
+          },
+          {
+            purchaseYear: "2019",
+            surrenderPeriod: "7 years",
+            freeDate: "2026",
+            status: "NOW",
+            volume: "High",
+          },
+          {
+            purchaseYear: "2020",
+            surrenderPeriod: "5 years",
+            freeDate: "2025",
+            status: "NOW",
+            volume: "Extreme",
+          },
+          {
+            purchaseYear: "2021",
+            surrenderPeriod: "5 years",
+            freeDate: "2026",
+            status: "NOW",
+            volume: "Extreme",
+          },
+        ],
+        message:
+          "Your annuity protected you during uncertain times. The surrender period is over. Your capital is free. Should it stay earning 3-4%, or work at 12-20% in a private structure?",
+      },
     ],
   },
   dark: {
@@ -545,6 +600,46 @@ export const SIGNALS: SignalsData = {
         partnershipLogic: "Partner with associations for educational seminars",
         differentiation:
           "Position as specialist in their industry's unique needs",
+      },
+      {
+        name: "Building Permits (Major Renovation)",
+        source: "Municipal Building Departments",
+        cost: "Free",
+        legality: "100% Legal - Public Municipal Records",
+        strength: "Medium",
+        description:
+          "Major renovation permits ($50K+) signal owner investment, property improvement, or estate preparation.",
+        interpretation: [
+          "$50K+ renovation indicates owner investing in asset",
+          "ADU permit signals investor-minded owner",
+          "Permit cluster in neighborhood indicates appreciation",
+          "Demolition permit suggests redevelopment play",
+        ],
+        howToFind: [
+          "Municipal building department online portals",
+          "Permit type filter: Residential Remodel, ADU, Addition",
+          "Value threshold: $50,000+",
+        ],
+      },
+      {
+        name: "UCC Filings / Business Liens",
+        source: "Secretary of State",
+        cost: "Free",
+        legality: "100% Legal - Public Records",
+        strength: "Medium-High",
+        description:
+          "Heavy UCC activity on business indicates leveraged owner. Match debtor name with property owner name for wealth correlation.",
+        interpretation: [
+          "Multiple UCC filings indicate business owner",
+          "Equipment financing suggests active business operations",
+          "Cross-reference with property records for portfolio sizing",
+          "Lien releases indicate business success or exit",
+        ],
+        howToFind: [
+          "Secretary of State UCC database search",
+          "Match debtor name with county assessor owner records",
+          "Filter by filing date for recent activity",
+        ],
       },
     ],
   },
